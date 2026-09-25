@@ -6,14 +6,15 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenuGroup
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.DropdownMenuPopup
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
+import androidx.compose.material3.SelectableDropdownMenuItem
 import androidx.compose.material3.SmallFloatingActionButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -24,6 +25,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.sosauce.nekobites.animations.AnimatedDrawable
+import com.sosauce.nekobites.animations.AnimatedDrawableFile
 import com.sosauce.vanilla.R
 import com.sosauce.vanilla.data.datastore.rememberHistoryNewestFirst
 
@@ -35,26 +38,21 @@ fun HistoryActionButtons(
     var dropDownExpanded by remember { mutableStateOf(false) }
     var newestFirst by rememberHistoryNewestFirst()
 
-    SmallFloatingActionButton(
-        onClick = {},
+
+    Surface(
         modifier = modifier,
         shape = RoundedCornerShape(14.dp),
-        containerColor = MaterialTheme.colorScheme.surfaceContainer
+        shadowElevation = 5.dp,
+        color =  MaterialTheme.colorScheme.surfaceContainerHigh
     ) {
         Row {
             IconButton(
                 onClick = { dropDownExpanded = true }
             ) {
-                AnimatedContent(
-                    targetState = !dropDownExpanded
-                ) {
-                    Icon(
-                        painter = if (it) painterResource(R.drawable.sort_rounded) else painterResource(
-                            R.drawable.close
-                        ),
-                        contentDescription = stringResource(R.string.sort)
-                    )
-                }
+                AnimatedDrawable(
+                    drawable = AnimatedDrawableFile.MORE_VERT,
+                    atEnd = dropDownExpanded
+                )
             }
             IconButton(
                 onClick = onDeleteHistory
@@ -73,11 +71,11 @@ fun HistoryActionButtons(
                 DropdownMenuGroup(
                     shapes = MenuDefaults.groupShapes()
                 ) {
-                    DropdownMenuItem(
+                    SelectableDropdownMenuItem(
                         selected = newestFirst,
                         onClick = { newestFirst = true },
                         text = { Text(stringResource(R.string.newest_first)) },
-                        trailingIcon = {
+                        trailingContent = {
                             if (newestFirst) {
                                 Icon(
                                     painter = painterResource(R.drawable.check),
@@ -87,11 +85,11 @@ fun HistoryActionButtons(
                         },
                         shapes = MenuDefaults.itemShapes()
                     )
-                    DropdownMenuItem(
+                    SelectableDropdownMenuItem(
                         selected = !newestFirst,
                         onClick = { newestFirst = false },
                         text = { Text(stringResource(R.string.oldest_first)) },
-                        trailingIcon = {
+                        trailingContent = {
                             if (!newestFirst) {
                                 Icon(
                                     painter = painterResource(R.drawable.check),

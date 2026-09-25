@@ -35,7 +35,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sosauce.vanilla.R
-import com.sosauce.vanilla.utils.thenIf
 
 
 @Composable
@@ -50,7 +49,7 @@ fun SettingsSwitch(
     Card(
         colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceContainer),
         modifier = Modifier
-            .padding(horizontal = 16.dp, vertical = 2.dp),
+            .padding(horizontal = 16.dp, vertical = 1.dp),
         shape = RoundedCornerShape(
             topStart = topDp,
             topEnd = topDp,
@@ -91,79 +90,7 @@ fun SettingsSwitch(
     }
 }
 
-@Composable
-fun SettingsDropdownMenu(
-    value: Long,
-    topDp: Dp,
-    bottomDp: Dp,
-    text: Int,
-    optionalDescription: Int? = null,
-    dropdownContent: @Composable (ColumnScope.() -> Unit)
-) {
 
-    var expanded by remember { mutableStateOf(false) }
-
-
-    Card(
-        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceContainer),
-        modifier = Modifier
-            .padding(horizontal = 16.dp, vertical = 2.dp),
-        shape = RoundedCornerShape(
-            topStart = topDp,
-            topEnd = topDp,
-            bottomStart = bottomDp,
-            bottomEnd = bottomDp
-        )
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier
-                .padding(15.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .weight(1f)
-            ) {
-                Column {
-                    Text(stringResource(text))
-                    optionalDescription?.let {
-                        Text(
-                            text = stringResource(it),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize = 12.sp
-                        )
-                    }
-                }
-            }
-            TextButton(
-                onClick = { expanded = true }
-            ) {
-                AnimatedContent(
-                    targetState = value
-                ) {
-                    Text(
-                        text = if (it == Long.MAX_VALUE) stringResource(R.string.no_limit) else it.toString(),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 15.sp
-                    )
-                }
-
-
-                DropdownMenuPopup(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false }
-                ) {
-                    DropdownMenuGroup(
-                        shapes = MenuDefaults.groupShapes(),
-                        modifier = Modifier.verticalScroll(rememberScrollState())
-                    ) { dropdownContent() }
-                }
-            }
-        }
-    }
-}
 
 
 

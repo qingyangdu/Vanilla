@@ -1,146 +1,196 @@
 package com.sosauce.vanilla.ui.navigation
 
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.retain.retain
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalWindowInfo
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.ui.NavDisplay
+import com.sosauce.nekobites.animations.bouncySpec
 import com.sosauce.vanilla.data.actions.CalcAction
 import com.sosauce.vanilla.data.datastore.rememberIsLandscape
 import com.sosauce.vanilla.ui.screens.calculator.CalculatorScreen
-import com.sosauce.vanilla.ui.screens.calculator.CalculatorScreenLandscape
+import com.sosauce.vanilla.ui.screens.calculator.CalculatorScreenLandscape2
 import com.sosauce.vanilla.ui.screens.calculator.CalculatorViewModel
 import com.sosauce.vanilla.ui.screens.history.HistoryScreen
 import com.sosauce.vanilla.ui.screens.history.HistoryViewModel
-import com.sosauce.vanilla.ui.screens.settings.SettingsScreen
+import com.sosauce.vanilla.ui.screens.settings.SettingsFormatting
+import com.sosauce.vanilla.ui.screens.settings.SettingsHistory
+import com.sosauce.vanilla.ui.screens.settings.SettingsLookAndFeel
+import com.sosauce.vanilla.ui.screens.settings.SettingsMisc
+import com.sosauce.vanilla.ui.screens.settings.SettingsDetailScaffold
+import com.sosauce.vanilla.ui.screens.settings.SettingsHomeScreen
 import com.sosauce.vanilla.utils.CalculatorViewModelFactory
 import com.sosauce.vanilla.utils.HistoryViewModelFactory
-import com.sosauce.vanilla.utils.bouncySpec
-import com.sosauce.vanilla.utils.navigationBouncySpec
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 @Composable
 fun Nav() {
-
-
     val activity = LocalActivity.current!!
     val isLandscape = rememberIsLandscape()
     val viewModel =
         viewModel<CalculatorViewModel>(factory = CalculatorViewModelFactory(activity.application))
     val historyViewModel =
         viewModel<HistoryViewModel>(factory = HistoryViewModelFactory(activity.application))
-    var screenToDisplay by rememberSaveable { mutableStateOf(Screens.MAIN) }
 
-    val windowInfo = LocalWindowInfo.current
+    val backStack = rememberNavBackStack(Main)
 
-    // Mimic back behavior from navigation
-    BackHandler {
-        if (screenToDisplay != Screens.MAIN) {
-            screenToDisplay = Screens.MAIN
-        } else {
-            activity.moveTaskToBack(true)
+    val entryProvider = entryProvider {
+        entry<Main> {
+            MainDestination(
+                isLandscape = isLandscape,
+                viewModel = viewModel,
+                historyViewModel = historyViewModel,
+                onNavigate = backStack::navigate
+            )
         }
-    }
-
-    AnimatedContent(
-        targetState = screenToDisplay,
-        transitionSpec = { slideInHorizontally(navigationBouncySpec) { -it } + fadeIn() togetherWith fadeOut() },
-        modifier = Modifier.background(MaterialTheme.colorScheme.background)
-    ) { screen ->
-        when (screen) {
-            Screens.MAIN -> {
-                // survive config changes without needing a saver
-                val yTranslation = retain { Animatable(0f) }
-                val scope = rememberCoroutineScope()
-
-                Box(
-                    modifier = Modifier.clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)),
-                ) {
-                    val calculations by historyViewModel.allCalculations.collectAsStateWithLifecycle()
-                    HistoryScreen(
-                        calculations = calculations,
-                        onEvents = historyViewModel::onEvent,
-                        onPutBackToField = { expression ->
-                            viewModel.handleAction(CalcAction.AddExpressionToField(expression))
-                        },
-                        onGotoMain = {
-                            scope.launch {
-                                yTranslation.animateTo(0f, bouncySpec())
-                            }
-                        }
-                    )
-
-                    if (isLandscape) {
-                        CalculatorScreenLandscape(
-                            modifier = Modifier
-                                .graphicsLayer {
-                                    translationY = yTranslation.value
-                                },
-                            viewModel = viewModel,
-                            historyViewModel = historyViewModel,
-                            onNavigate = { screenToDisplay = it },
-                            onGotoHistory = {
-                                scope.launch {
-                                    yTranslation.animateTo(windowInfo.containerSize.height.toFloat(), bouncySpec())
-                                }
-                            }
-                        )
+        entry<SettingsHome> {
+            SettingsHomeScreen(
+                onNavigate = backStack::navigate,
+                onBack = {
+                    if (backStack.size > 1) {
+                        backStack.removeLastOrNull()
                     } else {
-                        CalculatorScreen(
-                            modifier = Modifier
-                                .graphicsLayer {
-                                    translationY = yTranslation.value
-                                },
-                            viewModel = viewModel,
-                            onNavigate = { screenToDisplay = it },
-                            historyViewModel = historyViewModel,
-                            onUpdateDragAmount = { dragAmount ->
-                                val value = (yTranslation.value + dragAmount).coerceAtLeast(0f) // always keep the value positive or else it's a shithole to manage
-
-                                scope.launch {
-                                    yTranslation.snapTo(value)
-                                }
-                            },
-                            onDragStopped = {
-                                if (yTranslation.value.roundToInt() >= windowInfo.containerSize.height / 2) {
-                                    yTranslation.animateTo(windowInfo.containerSize.height.toFloat(), bouncySpec())
-                                } else {
-                                    yTranslation.animateTo(0f, bouncySpec())
-                                }
-                            }
-                        )
+                        activity.moveTaskToBack(true)
                     }
                 }
+            )
+        }
+        entry<LookAndFeel> {
+            SettingsDetailScaffold(onBack = backStack::navigateBack) {
+                SettingsLookAndFeel()
             }
-
-            Screens.SETTINGS -> {
-                SettingsScreen(
-                    onNavigate = { screenToDisplay = it }
-                )
+        }
+        entry<HistorySettings> {
+            SettingsDetailScaffold(onBack = backStack::navigateBack) {
+                SettingsHistory()
+            }
+        }
+        entry<Formatting> {
+            SettingsDetailScaffold(onBack = backStack::navigateBack) {
+                SettingsFormatting()
+            }
+        }
+        entry<Misc> {
+            SettingsDetailScaffold(onBack = backStack::navigateBack) {
+                SettingsMisc()
             }
         }
     }
 
+    NavDisplay(
+        backStack = backStack,
+        onBack = backStack::navigateBack,
+        entryProvider = entryProvider,
+        modifier = Modifier.background(MaterialTheme.colorScheme.background),
+        transitionSpec = {
+            ContentTransform(
+                targetContentEnter = slideInHorizontally { it } + fadeIn(),
+                initialContentExit = slideOutHorizontally { -it / 4 } + fadeOut()
+            )
+        },
+        popTransitionSpec = {
+            ContentTransform(
+                targetContentEnter = slideInHorizontally { it } + fadeIn(),
+                initialContentExit = slideOutHorizontally { -it / 4 } + fadeOut()
+            )
+        },
+        predictivePopTransitionSpec = {
+            ContentTransform(
+                targetContentEnter = slideInHorizontally { it } + fadeIn(),
+                initialContentExit = slideOutHorizontally { -it / 4 } + fadeOut()
+            )
+        }
+    )
 }
+
+@Composable
+private fun MainDestination(    isLandscape: Boolean,
+    viewModel: CalculatorViewModel,
+    historyViewModel: HistoryViewModel,
+    onNavigate: (NavKey) -> Unit
+) {
+    // survive config changes without needing a saver
+    val yTranslation = retain { Animatable(0f) }
+    val scope = rememberCoroutineScope()
+    val windowInfo = LocalWindowInfo.current
+
+    Box {
+        val calculations by historyViewModel.allCalculations.collectAsStateWithLifecycle()
+        HistoryScreen(
+            calculations = calculations,
+            onEvents = historyViewModel::handleHistoryEvent,
+            onPutBackToField = { expression ->
+                viewModel.handleAction(CalcAction.AddExpressionToField(expression))
+            },
+            onGotoMain = {
+                scope.launch {
+                    yTranslation.animateTo(0f, bouncySpec())
+                }
+            }
+        )
+
+        if (isLandscape) {
+            CalculatorScreenLandscape2(
+                modifier = Modifier
+                    .graphicsLayer {
+                        translationY = yTranslation.value
+                    },
+                viewModel = viewModel,
+                onHandleHistoryEvent = historyViewModel::handleHistoryEvent,
+                onNavigate = onNavigate,
+                onGotoHistory = {
+                    scope.launch {
+                        yTranslation.animateTo(windowInfo.containerSize.height.toFloat(), bouncySpec())
+                    }
+                }
+            )
+        } else {
+            CalculatorScreen(
+                modifier = Modifier
+                    .graphicsLayer {
+                        translationY = yTranslation.value
+                    },
+                viewModel = viewModel,
+                onNavigate = onNavigate,
+                onHandleHistoryEvent = historyViewModel::handleHistoryEvent,
+                onUpdateDragAmount = { dragAmount ->
+                    val value = (yTranslation.value + dragAmount).coerceAtLeast(0f)
+
+                    scope.launch {
+                        yTranslation.snapTo(value)
+                    }
+                },
+                onDragStopped = {
+                    scope.launch {
+                        if (yTranslation.value.roundToInt() >= windowInfo.containerSize.height / 2) {
+                            yTranslation.animateTo(windowInfo.containerSize.height.toFloat(), bouncySpec())
+                        } else {
+                            yTranslation.animateTo(0f, bouncySpec())
+                        }
+                    }
+                }
+            )
+        }
+    }
+}
+
+

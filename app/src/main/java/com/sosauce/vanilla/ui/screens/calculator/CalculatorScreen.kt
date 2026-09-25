@@ -6,6 +6,7 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -27,12 +29,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
+import androidx.navigation3.runtime.NavKey
 import com.sosauce.vanilla.R
 import com.sosauce.vanilla.data.actions.CalcAction
 import com.sosauce.vanilla.data.calculator.Tokens
@@ -42,7 +46,7 @@ import com.sosauce.vanilla.data.datastore.rememberShowClearButton
 import com.sosauce.vanilla.data.datastore.rememberSwapZeroAndDecimal
 import com.sosauce.vanilla.data.datastore.rememberUseHistory
 import com.sosauce.vanilla.domain.repository.HistoryEvents
-import com.sosauce.vanilla.ui.navigation.Screens
+import com.sosauce.vanilla.ui.navigation.SettingsHome
 import com.sosauce.vanilla.ui.screens.calculator.components.ButtonType
 import com.sosauce.vanilla.ui.screens.calculator.components.CalcButton
 import com.sosauce.vanilla.ui.screens.calculator.components.CalculationDisplay
@@ -59,8 +63,8 @@ import java.text.DecimalFormatSymbols
 fun CalculatorScreen(
     modifier: Modifier = Modifier,
     viewModel: CalculatorViewModel,
-    historyViewModel: HistoryViewModel,
-    onNavigate: (Screens) -> Unit,
+    onHandleHistoryEvent: (HistoryEvents)-> Unit,
+    onNavigate: (NavKey) -> Unit,
     onUpdateDragAmount: (Float) -> Unit,
     onDragStopped: suspend CoroutineScope.(Float) -> Unit
 ) {
@@ -249,7 +253,8 @@ fun CalculatorScreen(
                 val result = viewModel.evaluatedCalculation
 
                 if (saveToHistory && operation != result) {
-                    historyViewModel.onEvent(
+
+                    onHandleHistoryEvent(
                         HistoryEvents.AddCalculation(
                             operation = operation,
                             result = result,
@@ -283,19 +288,8 @@ fun CalculatorScreen(
                     )
                 },
                 actions = {
-//                    IconButton(
-//                        onClick = {},
-//                        shapes = IconButtonDefaults.shapes()
-//                    ) {
-//                        Icon(
-//                            painter = painterResource(R.drawable.history_rounded),
-//                            contentDescription = stringResource(R.string.history),
-//                            tint = MaterialTheme.colorScheme.onBackground
-//                        )
-//                    }
-
                     IconButton(
-                        onClick = { onNavigate(Screens.SETTINGS) },
+                        onClick = { onNavigate(SettingsHome) },
                         shapes = IconButtonDefaults.shapes()
                     ) {
                         Icon(
@@ -309,21 +303,29 @@ fun CalculatorScreen(
     ) { pv ->
         Column(
             modifier = Modifier
-                .padding(horizontal = 10.dp)
                 .fillMaxSize()
-                .padding(pv),
-            verticalArrangement = Arrangement.Bottom
+                .padding(pv)
+                .padding(horizontal = 10.dp),
+            verticalArrangement = Arrangement.Bottom,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            CalculationDisplay(
-                modifier = Modifier.weight(1f),
-                viewModel = viewModel,
-                onNavigate = onNavigate
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .widthIn(max = PortraitMaxContentWidth)
+                    .weight(1f, fill = true)
+            ) {
+                CalculationDisplay(
+                    modifier = Modifier.fillMaxSize(),
+                    viewModel = viewModel
+                )
+            }
             Spacer(Modifier.height(5.dp))
 
             Column(
                 modifier = Modifier
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .widthIn(max = PortraitMaxContentWidth),
                 verticalArrangement = Arrangement.spacedBy(9.dp),
             ) {
                 val rows = listOf(row1, row2, row3, row4, row5, row6)
@@ -350,3 +352,5 @@ fun CalculatorScreen(
         }
     }
 }
+
+private val PortraitMaxContentWidth = 560.dp

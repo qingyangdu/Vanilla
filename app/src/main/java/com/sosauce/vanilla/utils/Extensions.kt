@@ -25,15 +25,6 @@ import com.sosauce.vanilla.data.calculator.Tokens
 import com.sosauce.vanilla.domain.model.Calculation
 import java.text.DecimalFormatSymbols
 
-fun Modifier.thenIf(
-    condition: Boolean,
-    modifier: Modifier.() -> Modifier
-): Modifier {
-    return if (condition) {
-        this.then(modifier())
-    } else this
-}
-
 
 fun List<Calculation>.sort(
     newestFirst: Boolean
@@ -172,22 +163,6 @@ fun String.formatNumber(shouldFormat: Boolean): String {
 }
 
 
-fun String.formatExpression(shouldFormat: Boolean): String {
-
-    if (!shouldFormat) return this
-
-    var expression = this
-    val numberRegex = Regex("[\\d.]+")
-
-    numberRegex.findAll(expression).forEach { result ->
-        expression = expression.replace(result.value, result.value.formatNumber(true))
-    }
-
-    return expression
-
-}
-
-
 fun Activity.showOnLockScreen(show: Boolean) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
         setShowWhenLocked(show)
@@ -208,12 +183,6 @@ fun Modifier.selfAlignHorizontally(align: Alignment.Horizontal = Alignment.Cente
             .wrapContentWidth(align)
     )
 }
-fun <T> bouncySpec() = spring<T>(
-    dampingRatio = Spring.DampingRatioMediumBouncy,
-    stiffness = Spring.StiffnessLow
-)
-val navigationBouncySpec = spring<IntOffset>(Spring.DampingRatioLowBouncy, Spring.StiffnessLow)
-
 
 val Context.appVersion
     get() = packageManager.getPackageInfo(packageName, 0).versionName

@@ -43,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.nativeClipboardManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -52,6 +53,10 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEachIndexed
+import com.sosauce.nekobites.animations.AnimatedDrawable
+import com.sosauce.nekobites.animations.AnimatedDrawableFile
+import com.sosauce.nekobites.animations.AnimatedFab
+import com.sosauce.nekobites.components.NoXFound
 import com.sosauce.vanilla.R
 import com.sosauce.vanilla.data.datastore.rememberColoredOperators
 import com.sosauce.vanilla.data.datastore.rememberDecimal
@@ -61,9 +66,6 @@ import com.sosauce.vanilla.domain.model.Calculation
 import com.sosauce.vanilla.domain.repository.HistoryEvents
 import com.sosauce.vanilla.ui.screens.history.components.DeletionConfirmationDialog
 import com.sosauce.vanilla.ui.screens.history.components.HistoryActionButtons
-import com.sosauce.vanilla.ui.shared_components.AnimatedFab
-import com.sosauce.vanilla.utils.formatExpression
-import com.sosauce.vanilla.utils.formatNumber
 import com.sosauce.vanilla.utils.isErrorMessage
 import com.sosauce.vanilla.utils.isOperator
 import com.sosauce.vanilla.utils.sort
@@ -99,7 +101,7 @@ fun HistoryScreen(
                 AnimatedFab(
                     onClick = onGotoMain,
                     icon = R.drawable.arrow_up,
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                 )
                 HistoryActionButtons { showDeleteConfirmation = true }
             }
@@ -130,27 +132,11 @@ fun HistoryScreen(
 
                 if (calculations.isEmpty()) {
                     item {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.history_rounded),
-                                contentDescription = null,
-                                modifier = Modifier.size(70.dp)
-                            )
-                            Spacer(Modifier.height(10.dp))
-                            Text(
-                                text = stringResource(R.string.no_calc_found),
-                                style = MaterialTheme.typography.headlineMediumEmphasized,
-                                fontWeight = FontWeight.Black
-                            )
-                            Text(
-                                text = stringResource(R.string.calc_empty),
-                                style = MaterialTheme.typography.bodyMediumEmphasized,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                        NoXFound(
+                            headlineText = R.string.empty_history,
+                            bodyText = R.string.empty_history_desc,
+                            icon = R.drawable.history_rounded
+                        )
                     }
                 } else {
                     itemsIndexed(
@@ -161,8 +147,8 @@ fun HistoryScreen(
                             calculation = item,
                             onEvents = onEvents,
                             onPutBackToField = onPutBackToField,
-                            topDp = if (index == 0) 24.dp else 4.dp,
-                            bottomDp = if (index == calculations.lastIndex) 24.dp else 4.dp,
+                            topDp = if (index == 0) 24.dp else 2.dp,
+                            bottomDp = if (index == calculations.lastIndex) 24.dp else 2.dp,
                             modifier = Modifier.animateItem()
                         )
                     }
@@ -185,7 +171,6 @@ private fun CalculationItem(
 ) {
     val clipboardManager = LocalClipboard.current
     val localContentColor = LocalContentColor.current
-    val shouldFormat by rememberDecimal()
     val coloredOperators by rememberColoredOperators()
     var actionsExpanded by remember { mutableStateOf(false) }
     val actions = listOf(
@@ -196,7 +181,7 @@ private fun CalculationItem(
         ),
         HistoryAction(
             onClick = {
-                clipboardManager.nativeClipboard.setPrimaryClip(
+                clipboardManager.nativeClipboardManager.setPrimaryClip(
                     ClipData.newPlainText(
                         "",
                         "${calculation.operation} = ${calculation.result}"
@@ -219,7 +204,7 @@ private fun CalculationItem(
         onClick = { onPutBackToField(calculation.operation) },
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 2.dp),
+            .padding(horizontal = 16.dp, vertical = 1.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
@@ -244,7 +229,7 @@ private fun CalculationItem(
             ) {
                 Text(
                     text = buildAnnotatedString {
-                        calculation.operation.formatExpression(shouldFormat).forEach { char ->
+                        calculation.operation.forEach { char ->
                             if (coloredOperators && char.isOperator()) {
                                 withStyle(SpanStyle(MaterialTheme.colorScheme.primary)) {
                                     append(char)
@@ -256,20 +241,21 @@ private fun CalculationItem(
                     modifier = Modifier.basicMarquee()
                 )
                 Text(
-                    text = calculation.result.formatNumber(shouldFormat),
+                    text = calculation.result,
                     style = MaterialTheme.typography.titleLargeEmphasized.copy(
                         color = if (calculation.result.isErrorMessage()) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.tertiary
                     ),
                     modifier = Modifier.basicMarquee()
                 )
             }
+
             IconButton(
                 onClick = { actionsExpanded = true },
                 shapes = IconButtonDefaults.shapes()
             ) {
-                Icon(
-                    painter = painterResource(R.drawable.more_vert),
-                    contentDescription = stringResource(R.string.more_actions)
+                AnimatedDrawable(
+                    drawable = AnimatedDrawableFile.MORE_VERT,
+                    atEnd = actionsExpanded
                 )
 
                 DropdownMenuPopup(

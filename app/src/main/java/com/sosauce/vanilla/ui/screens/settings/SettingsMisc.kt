@@ -1,24 +1,14 @@
 package com.sosauce.vanilla.ui.screens.settings
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.sosauce.vanilla.R
 import com.sosauce.vanilla.data.datastore.rememberShowOnLockScreen
 import com.sosauce.vanilla.ui.screens.settings.components.SettingsSwitch
 import com.sosauce.vanilla.ui.screens.settings.components.SettingsWithTitle
-import com.sosauce.vanilla.ui.shared_components.AnimatedFab
-import com.sosauce.vanilla.utils.selfAlignHorizontally
 
 @Composable
 fun SettingsMisc() {

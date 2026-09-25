@@ -11,7 +11,7 @@ import androidx.core.view.WindowCompat
 import com.sosauce.vanilla.data.datastore.rememberAppTheme
 import com.sosauce.vanilla.data.datastore.rememberShowOnLockScreen
 import com.sosauce.vanilla.ui.navigation.Nav
-import com.sosauce.vanilla.ui.theme.CuteCalcTheme
+import com.sosauce.vanilla.ui.theme.VanillaTheme
 import com.sosauce.vanilla.utils.CuteTheme
 import com.sosauce.vanilla.utils.showOnLockScreen
 
@@ -29,7 +29,7 @@ class MainActivity : ComponentActivity() {
 
             showOnLockScreen(showOnLockScreen)
 
-            CuteCalcTheme {
+            VanillaTheme {
                 WindowCompat
                     .getInsetsController(window, window.decorView)
                     .apply {

@@ -5,6 +5,9 @@ import com.notkamui.keval.Keval
 import com.notkamui.keval.KevalInvalidArgumentException
 import com.notkamui.keval.KevalInvalidExpressionException
 import com.notkamui.keval.KevalNumbers
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.withContext
 import java.math.BigDecimal
 import java.math.MathContext
 import java.math.RoundingMode
@@ -56,21 +59,18 @@ object Evaluator {
 
     }
 
-    private var prevResult: String = ""
-
-
     @JvmStatic
-    fun eval(formula: String, precision: Int): String = try {
-        val result = KEVAL
-            .eval(formula.replace(Tokens.PI.toString(), "PI").handleRelativePercentage())
-            .setScale(precision, RoundingMode.HALF_EVEN)
-            .stripTrailingZeros().toPlainString()
-        prevResult = result
-        result
-    } catch (_: KevalInvalidExpressionException) {
-        prevResult
-    } catch (e: Exception) {
-        e.message ?: "Undetermined error"
+    suspend fun eval2(formula: String, precision: Int): Result<String> = withContext(Dispatchers.Default) {
+        return@withContext try {
+            if (formula.isEmpty()) return@withContext Result.success("")
+            val result = KEVAL
+                .eval(formula.replace(Tokens.PI.toString(), "PI").handleRelativePercentage())
+                .setScale(precision, RoundingMode.HALF_EVEN)
+                .stripTrailingZeros().toPlainString()
+            Result.success(result)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     // We don't call "handleRelativePercentage" here to avoid recursive call
@@ -81,17 +81,18 @@ object Evaluator {
     }
 
     private fun String.handleRelativePercentage(): String {
+        val expression = processParenthesisExpression()
 
-        return relativePercentageRegex.replace(this.processParenthesisExpression()) { match ->
-            val firstOperand = match.groupValues[1].toDouble()
+        return relativePercentageRegex.replace(expression) { match ->
+            val firstOperand = match.groupValues[1]
             val operator = match.groupValues[2]
-            val percentage = match.groupValues[3].toDouble()
+            val percentage = match.groupValues[3]
 
             when (operator) {
                 "+" -> "$firstOperand + ($firstOperand * $percentage / 100)"
                 "-" -> "$firstOperand - ($firstOperand * $percentage / 100)"
                 "*" -> "$firstOperand * ($percentage / 100)"
-                else -> "$firstOperand"
+                else -> firstOperand
             }
 
         }
@@ -99,15 +100,13 @@ object Evaluator {
     }
 
     private fun String.processParenthesisExpression(): String {
-        var expression = this
+        val hasModulo = this.contains("%")
 
-
-        parenthesisRegex.findAll(this).forEach { matchResult ->
+        return parenthesisRegex.replace(this) { matchResult ->
             val calculated = evalParenthesis(matchResult.value)
-            val replaceWith = if (this.contains("%")) calculated else "($calculated)"
-            expression = expression.replace(matchResult.value, replaceWith)
+            if (hasModulo) calculated else "($calculated)"
         }
-        return expression
+
     }
 
     private val parenthesisRegex = Regex("""\(([^()]+)\)""")

@@ -1,14 +1,22 @@
 package com.sosauce.vanilla.ui.navigation
 
-enum class Screens {
-    MAIN,
-    SETTINGS
-}
+import androidx.navigation3.runtime.NavKey
+import kotlinx.serialization.Serializable
 
-enum class SettingsScreen {
-    SETTINGS,
-    LOOK_AND_FEEL,
-    HISTORY,
-    FORMATTING,
-    MISC
-}
+@Serializable
+data object Main : NavKey
+
+@Serializable
+data object SettingsHome : NavKey
+
+@Serializable
+data object LookAndFeel : NavKey
+
+@Serializable
+data object HistorySettings : NavKey
+
+@Serializable
+data object Formatting : NavKey
+
+@Serializable
+data object Misc : NavKey

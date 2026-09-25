@@ -21,7 +21,7 @@ import com.sosauce.vanilla.utils.anyDarkColorScheme
 import com.sosauce.vanilla.utils.anyLightColorScheme
 
 @Composable
-fun CuteCalcTheme(
+fun VanillaTheme(
     content: @Composable () -> Unit
 ) {
 

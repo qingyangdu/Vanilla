@@ -9,7 +9,7 @@ sealed interface HistoryEvents {
     data class AddCalculation(
         val operation: String,
         val result: String,
-        val maxHistoryItems: Long,
+        val maxHistoryItems: Int,
         val saveErrors: Boolean
     ) : HistoryEvents
 }

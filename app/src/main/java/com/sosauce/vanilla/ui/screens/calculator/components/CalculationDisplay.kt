@@ -2,6 +2,12 @@
 
 package com.sosauce.vanilla.ui.screens.calculator.components
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -26,11 +32,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.sosauce.nekobites.animations.AnimatedCounter
 import com.sosauce.vanilla.data.calculator.Tokens
 import com.sosauce.vanilla.data.datastore.rememberColoredOperators
 import com.sosauce.vanilla.data.datastore.rememberDecimal
 import com.sosauce.vanilla.data.datastore.rememberUseSystemFont
-import com.sosauce.vanilla.ui.navigation.Screens
 import com.sosauce.vanilla.ui.screens.calculator.CalculatorViewModel
 import com.sosauce.vanilla.ui.theme.nunitoFontFamily
 import com.sosauce.vanilla.utils.formatNumber
@@ -39,8 +45,7 @@ import com.sosauce.vanilla.utils.isErrorMessage
 @Composable
 fun CalculationDisplay(
     modifier: Modifier = Modifier,
-    viewModel: CalculatorViewModel,
-    onNavigate: (Screens) -> Unit
+    viewModel: CalculatorViewModel
 ) {
 
     val useSystemFont by rememberUseSystemFont()
@@ -49,6 +54,7 @@ fun CalculationDisplay(
     val previewScrollState = rememberScrollState()
     val previewCanShowErrors by viewModel.previewShowErrors.collectAsStateWithLifecycle()
     val coloredOperators by rememberColoredOperators()
+    val isError = viewModel.evaluatedCalculation.isErrorMessage()
 
 
 
@@ -62,21 +68,31 @@ fun CalculationDisplay(
         modifier = modifier.padding(5.dp),
         verticalArrangement = Arrangement.Bottom
     ) {
-        Text(
-            text = viewModel.evaluatedCalculation
-                .formatNumber(shouldFormat)
-                .takeIf { !it.isErrorMessage() || previewCanShowErrors } ?: "",
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(previewScrollState),
-            style = MaterialTheme.typography.displayMediumEmphasized.copy(
-                textAlign = TextAlign.End,
-                fontWeight = FontWeight.ExtraBold,
-                color = if (!viewModel.evaluatedCalculation.isErrorMessage()) {
-                    MaterialTheme.colorScheme.tertiary
-                } else MaterialTheme.colorScheme.error
+
+        if (isError && previewCanShowErrors) {
+            Text(
+                text = viewModel.evaluatedCalculation,
+                style = MaterialTheme.typography.displayMediumEmphasized.copy(
+                    textAlign = TextAlign.End,
+                    color = MaterialTheme.colorScheme.error
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(previewScrollState)
             )
-        )
+        } else {
+            Text(
+                text = viewModel.evaluatedCalculation.formatNumber(shouldFormat),
+                style = MaterialTheme.typography.displayMediumEmphasized.copy(
+                    textAlign = TextAlign.End,
+                    color = MaterialTheme.colorScheme.tertiary
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(previewScrollState)
+            )
+        }
+
         DisableSoftKeyboard {
             BasicTextField(
                 state = viewModel.textFieldState,

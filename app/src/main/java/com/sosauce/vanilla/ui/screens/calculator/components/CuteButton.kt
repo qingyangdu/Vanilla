@@ -10,7 +10,9 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -27,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -52,6 +55,7 @@ fun CuteButton(
     rectangle: Boolean
 ) {
     val haptic = LocalHapticFeedback.current
+    val density = LocalDensity.current
     val shouldVibrate by rememberVibration()
     val useButtonsAnimation by rememberUseButtonsAnimation()
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -65,6 +69,8 @@ fun CuteButton(
         ButtonType.ACTION -> MaterialTheme.colorScheme.tertiary
         ButtonType.SPECIAL -> Color.Transparent
     }
+    val contentSize = MaterialTheme.typography.headlineLargeEmphasized
+    val contentSizeDp = with(density) { contentSize.fontSize.toDp() }
     Box(
         modifier = modifier
             .semantics { role = Role.Button }
@@ -84,7 +90,14 @@ fun CuteButton(
             )
             .background(backgroundColor)
             .let {
-                if (!isLandscape && !rectangle) it.aspectRatio(1f) else it
+                if (!isLandscape && !rectangle) {
+                    it.widthIn(max = SquareButtonMaxWidth)
+                        .heightIn(max = SquareButtonMaxHeight)
+                        .aspectRatio(1f)
+                } else {
+                    it.widthIn(max = RectButtonMaxWidth)
+                        .heightIn(max = RectButtonMaxHeight)
+                }
             },
         contentAlignment = Alignment.Center
     ) {
@@ -95,7 +108,7 @@ fun CuteButton(
                     painter = painterResource(R.drawable.backspace_filled),
                     contentDescription = stringResource(R.string.back),
                     tint = MaterialTheme.colorScheme.contentColorFor(backgroundColor),
-                    modifier = Modifier.size(45.dp)
+                    modifier = Modifier.size(contentSizeDp)
                 )
             }
 
@@ -104,7 +117,7 @@ fun CuteButton(
                     painter = painterResource(R.drawable.parentheses),
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.contentColorFor(backgroundColor),
-                    modifier = Modifier.size(45.dp)
+                    modifier = Modifier.size(contentSizeDp)
                 )
             }
 
@@ -112,7 +125,7 @@ fun CuteButton(
                 Text(
                     text = text,
                     color = contentColorFor(backgroundColor),
-                    style = MaterialTheme.typography.displaySmallEmphasized
+                    style = contentSize
                 )
             }
         }
@@ -126,6 +139,12 @@ enum class ButtonType {
     ACTION,
     OTHER
 }
+
+
+private val SquareButtonMaxWidth = 130.dp
+private val SquareButtonMaxHeight = 105.dp
+private val RectButtonMaxWidth = 190.dp
+private val RectButtonMaxHeight = 80.dp
 
 
 

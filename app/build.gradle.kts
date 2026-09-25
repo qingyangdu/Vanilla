@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 
@@ -30,10 +31,10 @@ android {
     defaultConfig {
 
         applicationId = "com.sosauce.cutecalc"
-        minSdk = 23
+        minSdk = 24
         targetSdk = 37
-        versionCode = 50004
-        versionName = "4.1.1"
+        versionCode = 50005
+        versionName = "4.2.0"
         ndk {
             //noinspection ChromeOsAbiSupport
             abiFilters += arrayOf("arm64-v8a", "armeabi-v7a")
@@ -83,5 +84,9 @@ dependencies {
     implementation(libs.keval)
     implementation(libs.androidx.room.ktx)
     implementation(libs.squircle.shape)
+    implementation(libs.nekobites)
+    implementation(libs.androidx.navigation3.runtime)
+    implementation(libs.androidx.navigation3.ui)
+    implementation(libs.kotlinx.serialization.core)
     ksp(libs.androidx.room.compiler)
 }
