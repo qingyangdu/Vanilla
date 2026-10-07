@@ -155,7 +155,7 @@ fun String.formatNumber(shouldFormat: Boolean): String {
     // 1234
     val formattedInteger = integer
         .reversed() // 4321
-        .chunked(3) // [432, 1]
+        .chunked(4) // [432, 1]
         .joinToString(localSymbols.groupingSeparator.toString()) // 432,1
         .reversed() // 1,234
 
